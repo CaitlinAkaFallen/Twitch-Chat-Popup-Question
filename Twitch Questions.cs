@@ -4,38 +4,29 @@ public class CPHInline
 {
     public bool Execute()
     {
-        // Get arguments from Streamer.Bot
-        CPH.TryGetArg("commandId", out Guid commandId);
-        CPH.TryGetArg("rawInput", out string rawInput); // The question asked by the user
-        CPH.TryGetArg("user", out string user); // The username of the person asking the question
-        CPH.TryGetArg("userProfileImageUrl", out string userProfileImageUrl); // The user's profile image URL
+        // Get arguments from Streamer.Bot (case-sensitive)
+        CPH.TryGetArg("message", out string message); 
+        CPH.TryGetArg("user", out string user);
+        CPH.TryGetArg("targetUserProfileImageUrl", out string targetUserProfileImageUrl); 
 
-        // Convert commandId to string for comparison
-        string commandIdString = commandId.ToString();
+        // Debug: check if the URL is valid
+        Console.WriteLine($"Profile Image URL: {targetUserProfileImageUrl}");
 
-        switch (commandIdString)
+        // Prepare the content for the OBS popup
+        string popupContent = $"Question from @{user}: {message}";
+
+        // Set the text in OBS using ObsSetGdiText
+        // Replace "QuestionTextSource" with the actual name of your GDI text source
+        CPH.ObsSetGdiText("Twitch Chat Question", "QuestionTextSource", popupContent, 0);
+
+        // Set the user's profile image in OBS using ObsSetBrowserSource
+        if (!string.IsNullOrEmpty(targetUserProfileImageUrl))
         {
-            case "12345678-abcd-1234-abcd-12345678abcd": // Popup Question Command
-
-                // Prepare the content for the OBS popup
-                string popupContent = $"Question from @{user}: {rawInput}";
-
-                // Set the text in OBS using ObsSetGdiText
-                CPH.ObsSetGdiText("SceneName", "QuestionTextSource", popupContent, 0);
-
-                // Set the user's profile image in OBS using ObsSetBrowserSource
-                CPH.ObsSetBrowserSource("SceneName", "UserProfileImageSource", userProfileImageUrl, 0);
-
-                // Optionally, send a message back to chat acknowledging the question
-                CPH.SendMessage($"Thanks for the question, @{user}!");
-
-                break;
-
-            default:
-                CPH.SendMessage($"Unknown command: {commandIdString}");
-                break;
+            // The second parameter "Twitch image" must match the name of your browser source in OBS
+            CPH.ObsSetBrowserSource("Twitch Chat Question", "Twitch image", targetUserProfileImageUrl, 0);
         }
 
         return true;
     }
 }
+
